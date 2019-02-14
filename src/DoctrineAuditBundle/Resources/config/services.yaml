@@ -1,7 +1,7 @@
 services:
   dh_doctrine_audit.user_provider:
     class: DH\DoctrineAuditBundle\User\TokenStorageUserProvider
-    arguments: ["@security.helper"]
+    arguments: ["@security.token_storage", "@security.authorization_checker"]
     public: true
 
   dh_doctrine_audit.configuration:

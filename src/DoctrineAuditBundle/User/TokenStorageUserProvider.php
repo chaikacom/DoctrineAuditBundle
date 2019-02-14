@@ -2,31 +2,39 @@
 
 namespace DH\DoctrineAuditBundle\User;
 
+use DH\DoctrineAuditBundle\User\User;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Role\SwitchUserRole;
-use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\UserInterface as BaseUserInterface;
+use DH\DoctrineAuditBundle\User\UserProviderInterface;
+use DH\DoctrineAuditBundle\User\UserInterface;
 
 class TokenStorageUserProvider implements UserProviderInterface
 {
-    private $security;
+    private $tokenStorage;
+    private $authorizationChecker;
 
-    public function __construct(Security $security)
-    {
-        $this->security = $security;
+    public function __construct(
+        TokenStorageInterface $tokenStorage,
+        AuthorizationCheckerInterface $authorizationChecker
+    ) {
+        $this->tokenStorage = $tokenStorage;
+        $this->authorizationChecker = $authorizationChecker;
     }
 
     public function getUser(): ?UserInterface
     {
         $user = null;
-        $token = $this->security->getToken();
+        $token = $this->tokenStorage->getToken();
 
         if (null !== $token) {
             $tokenUser = $token->getUser();
             if ($tokenUser instanceof BaseUserInterface) {
                 $impersonation = '';
-                if ($this->security->isGranted('ROLE_PREVIOUS_ADMIN')) {
+                if ($this->authorizationChecker->isGranted('ROLE_PREVIOUS_ADMIN')) {
                     $impersonatorUser = null;
-                    foreach ($this->security->getToken()->getRoles() as $role) {
+                    foreach ($this->tokenStorage->getToken()->getRoles() as $role) {
                         if ($role instanceof SwitchUserRole) {
                             $impersonatorUser = $role->getSource()->getUser();
 
